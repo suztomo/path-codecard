@@ -1,0 +1,3 @@
+[submodule "codecard"]
+	path = codecard
+	url = https://github.com/cameronsenese/codecard
