@@ -62,6 +62,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	// CodeCard rejects response with HTTP/1.0 even though the request is HTTP/1.0
 	// https://github.com/cameronsenese/codecard/commit/58880db2f32c391abce28eda90500a4e98580d80
+	// It turned out that Cloud Run's HTTPS front-end automatically converts this
+	// HTTP version. Thus this does not solve the problem. I had to upgrade CodeCard firmware.
 	r.Proto = "HTTP/1.1"
 	r.ProtoMajor = 1
 	r.ProtoMinor = 1
