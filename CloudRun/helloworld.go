@@ -47,6 +47,7 @@ type PathUpcomingTrain struct {
 	Status           string    `json:"status"`
 	Route            string    `json:"route"`
 	RouteDisplayName string    `json:"routeDisplayName"`
+	Headsign         string    `json:"headsign"`
 	Direction        string    `json:"direction"`
 }
 
@@ -68,17 +69,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	r.ProtoMajor = 1
 	r.ProtoMinor = 1
 
-	var request []string // Add the request string
-	url := fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto)
-	request = append(request, url)                             // Add the host
-	request = append(request, fmt.Sprintf("Host: %v", r.Host)) // Loop through headers
-	for name, headers := range r.Header {
-		name = strings.ToLower(name)
-		for _, h := range headers {
-			request = append(request, fmt.Sprintf("%v: %v", name, h))
-		}
-	}
-	log.Print(strings.Join(request, "\n"))
+	path := r.URL.Path
 
 	pathResponse, err := myClient.Get(PathAPIURL)
 	if err != nil {
@@ -96,18 +87,39 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var upcomingTrainDuration []time.Duration
 	bodyText := ""
 	var status string
+
+	var targetDirection string
+	var header string
+	hasDelay := false
+	if strings.HasSuffix(path, "fourteenth_street/TO_NJ") {
+		targetDirection = "TO_NJ"
+		header = "PATH to NJ"
+	} else if strings.HasSuffix(path, "fourteenth_street/TO_NY") {
+		targetDirection = "TO_NY"
+		header = "PATH to 33rd"
+	}
 	for _, upcomingTrain := range pathResponseJSON.UpcomingTrains {
-		if !strings.Contains(upcomingTrain.Route, "JSQ") || upcomingTrain.Direction != "TO_NJ" {
+		if upcomingTrain.Direction != targetDirection {
 			continue
 		}
 		status = upcomingTrain.Status
 		timeDiff := upcomingTrain.ProjectedArrival.Sub(currentTime)
 		upcomingTrainDuration = append(upcomingTrainDuration, timeDiff)
 		diffMinutes := timeDiff.Round(time.Minute) / time.Minute
-		bodyText = fmt.Sprintf("%s%d minutes\n", bodyText, diffMinutes)
+		bodyText = fmt.Sprintf("%s%s\n  in %d minutes (%s)\n",
+			bodyText, upcomingTrain.Headsign, diffMinutes, upcomingTrain.Status)
+		if upcomingTrain.Status != "ON_TIME" {
+			hasDelay = true
+		}
 	}
 
-	codeCard := CodeCard{"template1", "Hello CodeCard", "JSQ train: " + status, bodyText, "01d",
+	// https://github.com/cameronsenese/codecard/blob/master/functions/icons.md
+	iconName := "01d" // Sunny
+	if hasDelay {
+		iconName = "11d"
+	}
+	codeCard := CodeCard{"template1", header,
+		"from 14th Street", bodyText, iconName,
 		"white"}
 	codeCardJSON, err := json.Marshal(codeCard)
 	if err != nil {
