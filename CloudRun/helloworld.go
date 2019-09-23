@@ -86,7 +86,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	currentTime := time.Now()
 	var upcomingTrainDuration []time.Duration
 	bodyText := ""
-	var status string
 
 	var targetDirection string
 	var header string
@@ -102,7 +101,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		if upcomingTrain.Direction != targetDirection {
 			continue
 		}
-		status = upcomingTrain.Status
 		timeDiff := upcomingTrain.ProjectedArrival.Sub(currentTime)
 		upcomingTrainDuration = append(upcomingTrainDuration, timeDiff)
 		diffMinutes := timeDiff.Round(time.Minute) / time.Minute
@@ -116,7 +114,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// https://github.com/cameronsenese/codecard/blob/master/functions/icons.md
 	iconName := "01d" // Sunny
 	if hasDelay {
-		iconName = "11d"
+		iconName = "11d" // Thunderstorm
 	}
 	codeCard := CodeCard{"template1", header,
 		"from 14th Street", bodyText, iconName,
