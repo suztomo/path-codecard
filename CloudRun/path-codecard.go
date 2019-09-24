@@ -106,7 +106,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		diffMinutes := timeDiff.Round(time.Minute) / time.Minute
 		bodyText = fmt.Sprintf("%s%s\n  in %d minutes (%s)\n",
 			bodyText, upcomingTrain.Headsign, diffMinutes, upcomingTrain.Status)
-		if upcomingTrain.Status != "ON_TIME" {
+		if upcomingTrain.Status != "ON_TIME" && upcomingTrain.Status != "NOW_ARRIVING" {
 			hasDelay = true
 		}
 	}
@@ -116,8 +116,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if hasDelay {
 		iconName = "11d" // Thunderstorm
 	}
+
+	newYork, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	newYorkTime := time.Now().In(newYork)
+	timestamp := fmt.Sprintf(newYorkTime.Format("Mon Jan _2 15:04:05"))
 	codeCard := CodeCard{"template1", header,
-		"from 14th Street", bodyText, iconName,
+		timestamp, bodyText, iconName,
 		"white"}
 	codeCardJSON, err := json.Marshal(codeCard)
 	if err != nil {
