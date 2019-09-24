@@ -16,6 +16,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -o path-codecard
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
 FROM alpine
 RUN apk add --no-cache ca-certificates
+RUN apk --no-cache add tzdata && \
+    cp /usr/share/zoneinfo/America/New_York /etc/localtime
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /go/src/github.com/knative/docs/helloworld/path-codecard /path-codecard

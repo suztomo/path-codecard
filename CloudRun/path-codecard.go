@@ -117,6 +117,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		iconName = "11d" // Thunderstorm
 	}
 
+	// Dockerfile needs to have time zone file
+	// http://kawaken.hateblo.jp/entry/2018/08/30/190954
 	newYork, err := time.LoadLocation("America/New_York")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
